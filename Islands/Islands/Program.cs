@@ -1,64 +1,74 @@
-﻿using System;
+﻿using Terminal;
+using System;
 using System.Reflection;
-using Islands.Exceptions;
-using Islands.Service_Providers.Command_Console;
 
 // TODO:
-// Make work on static classes
-// Condense namespaces
 // Summaries
-// Remove named parameter 'developer'?
+// better exceptions and error handling
+// Fix Terminal namespace not working
+// Condense AddInstanceCommands and AddStaticCommands into one?
+// Hvis flere commands med samme navn på tværs af klasser -> specificer klassenavn
+// håndter overloaded metoder?
+//- Double
+// - Byte
+// - Long
 
-namespace Islands
+// Nice to haves:
+// Hot keys?
+// User-expandable parser??
+// More metadata about commands and where they are pulled from
+
+class Program
 {
-    class Program
+    public static void Main (string[] args)
     {
-        public static void Main(string[] args)
+        Logger logger = new Logger();
+
+        Terminal.Terminal.AddInstanceCommands(logger);
+        Terminal.Terminal.AddStaticCommands(typeof(StaticCommandsExample));
+
+        Terminal.Terminal.PrintCommands();
+
+        do
         {
-            Logger logger = new Logger();
-            CommandConsole.AddCommands(logger);
-
-            LogicProvider provider = new LogicProvider();
-            CommandConsole.AddCommands(provider);
-
-            CommandConsole.PrintCommands();
-
-            do
+            try
             {
-                try
-                {
-                    string input = Console.ReadLine();
-                    Command cmd = CommandConsole.ParseInput(input);
-                    ParameterInfo[] calleeParameters = cmd.Parameters;
-                    int parameterCount = calleeParameters.Length;
-                    object[] invokeParameters = new object[parameterCount];
+                string input = Console.ReadLine();
+                Command cmd = Terminal.Terminal.GetCommand(input);
+                ParameterInfo[] calleeParameters = cmd.Parameters;
+                int parameterCount = calleeParameters.Length;
+                object[] invokeParameters = new object[parameterCount];
 
-                    for (int i = 0; i < parameterCount; i++)
+                for (int i = 0; i < parameterCount; i++)
+                {
+                    Console.WriteLine("Input: " + calleeParameters[i].ParameterType.Name);
+
+                    string actualParameter = Console.ReadLine();
+                    object objectParameter = Terminal.Terminal.ParseParameter(calleeParameters[i].ParameterType, actualParameter);
+
+                    if (objectParameter == null)
                     {
-                        Console.WriteLine("Input: " + calleeParameters[i].ParameterType.Name);
-
-                        string actualParameter = Console.ReadLine();
-
-                        object objectParameter = CommandConsole.ParseParameter(calleeParameters[i].ParameterType, actualParameter);
-
-                        if (objectParameter == null)
-                        {
-                            Console.WriteLine("Paremeter not accepted");
-                            i = i - 1;
-                            continue;
-                        }
-                        else
-                            invokeParameters[i] = objectParameter;
+                        Console.WriteLine("Parameter not accepted");
+                        i = i - 1;
+                        continue;
                     }
+                    else
+                        invokeParameters[i] = objectParameter;
+                }
 
-                    cmd.Invoke(invokeParameters);
-                }
-                catch (InvalidCommandException e)
-                {
-                    Console.WriteLine(e.Message);
-                }
+                cmd.Invoke(invokeParameters);
             }
-            while (true);
+            catch (InvalidCommandException e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
+        while (true);
     }
 }
+
+
+
+
+
+// Add a named parameter "name" to TerminalCommand

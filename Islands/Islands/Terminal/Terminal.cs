@@ -1,22 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Islands.Exceptions;
-using Islands.Attributes;
-using System.Collections.Generic;
 
-namespace Islands.Service_Providers.Command_Console
+namespace Terminal
 {
-    public static class CommandConsole
+    public static class Terminal
     {
         static List<Command> Commands = new List<Command>();
 
-        // Collects every method in the object decorated with a [ConsoleCommand] attribute
-        public static void AddCommands (object instance)
+        /// <summary>
+        /// Adds commands from a class belonging to an intance
+        /// </summary>
+        /// <param name="instance"></param>
+        public static void AddInstanceCommands (object instance)
         {
             Type type = instance.GetType();
             MethodInfo[] methods = type.GetMethods().
-                Where(s => s.GetCustomAttribute(typeof(ConsoleCommand)) != null).ToArray<MethodInfo>();
+                Where(s => s.GetCustomAttribute(typeof(TerminalCommand)) != null).ToArray<MethodInfo>();
 
             foreach (MethodInfo mInfo in methods)
             {
@@ -25,7 +26,28 @@ namespace Islands.Service_Providers.Command_Console
             }
         }
 
-        public static Command ParseInput (string input)
+        /// <summary>
+        /// Adds commands from a static class
+        /// </summary>
+        /// <param name="staticInstance"></param>
+        public static void AddStaticCommands (Type classType)
+        {
+            MethodInfo[] methods = classType.GetMethods().
+                Where(i => i.GetCustomAttribute(typeof(TerminalCommand)) != null).ToArray<MethodInfo>();
+
+            foreach (MethodInfo mInfo in methods)
+            {
+                Command command = new Command(null, mInfo);
+                Commands.Add(command);
+            }
+        }
+
+        /// <summary>
+        /// Returns a command with a specific name
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static Command GetCommand (string input)
         {
             string trimmedInput = input.Trim(' ').ToLower();
 
@@ -40,12 +62,11 @@ namespace Islands.Service_Providers.Command_Console
         }
 
         /// <summary>
-        /// Checks if 'parameter' can be parsed to a specific type. If so it is returned in 'result' as an object
+        /// Parses 'parameter' to 'type' if possible. Returns null otherwise
         /// </summary>
         /// <param name="type"></param>
         /// <param name="parameter"></param>
-        /// <param name="result"></param>
-        /// <returns>Returns true or false. Will output result if true</returns>
+        /// <returns></returns>
         public static object ParseParameter (Type type, string parameter)
         {
             if (type == typeof(Boolean))
@@ -76,7 +97,9 @@ namespace Islands.Service_Providers.Command_Console
             }
         }
 
-        // Prints all console commands
+        /// <summary>
+        /// Prints every command available
+        /// </summary>
         public static void PrintCommands ()
         {
             foreach (Command cmd in Commands)

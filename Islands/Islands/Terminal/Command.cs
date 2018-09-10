@@ -1,8 +1,7 @@
-﻿using Islands.Attributes;
-using System;
+﻿using System;
 using System.Reflection;
 
-namespace Islands.Service_Providers.Command_Console
+namespace Terminal
 {
     public class Command
     {
@@ -15,12 +14,15 @@ namespace Islands.Service_Providers.Command_Console
 
         public Command (object instance, MethodInfo method)
         {
+            TerminalCommand attribute = GetAttributeData(method);
+
             this.Instance = instance;
             this.Method = method;
-            this.Name = method.Name;
             this.Class = method.DeclaringType.ToString();
-            this.Description = ((ConsoleCommand)Attribute.GetCustomAttribute(method, typeof(ConsoleCommand))).Description;
-            this.Parameters = Method.GetParameters();
+            this.Description = attribute.Description;
+            this.Parameters = method.GetParameters();
+
+            this.Name = attribute.Name ?? method.Name;
         }
 
         public void Invoke (object[] parameters)
@@ -31,6 +33,11 @@ namespace Islands.Service_Providers.Command_Console
         public void Invoke ()
         {
             this.Method.Invoke(this.Instance, null);
+        }
+
+        private TerminalCommand GetAttributeData (MethodInfo method)
+        {
+            return (TerminalCommand)Attribute.GetCustomAttribute(method, typeof(TerminalCommand));
         }
     }
 }

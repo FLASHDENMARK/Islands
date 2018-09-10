@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Islands.Exceptions
+namespace Terminal
 {
     class InvalidCommandException : Exception
     {
